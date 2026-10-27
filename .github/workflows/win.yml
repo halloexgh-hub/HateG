@@ -1,6 +1,7 @@
-name: Windows.
+name: HateG Windows
 
 on:
+  workflow_dispatch:
   push:
     # Pushes to the canary branches run only canary.yml, see there.
     branches-ignore:
@@ -52,14 +53,9 @@ jobs:
 
     strategy:
       matrix:
-        arch: [x64_x86, x64, arm64]
-        qt: ["", qt6]
-        generator: ["", "Ninja Multi-Config"]
-        exclude:
-          - arch: arm64
-            qt: ""
-          - arch: x64_x86
-            qt: qt6
+        arch: [x64]
+        qt: [qt6]
+        generator: ["Ninja Multi-Config"]
 
     env:
       UPLOAD_ARTIFACT: "true"
@@ -169,7 +165,7 @@ jobs:
       - name: Read configuration matrix.
         shell: bash
         run: |
-          ARTIFACT_NAME="Telegram"
+          ARTIFACT_NAME="HateG"
 
           ARCH=""
           if [ -n "${{ matrix.arch }}" ]; then
@@ -208,6 +204,10 @@ jobs:
           echo "ARTIFACT_NAME=$ARTIFACT_NAME" >> $GITHUB_ENV
 
           API="-D TDESKTOP_API_TEST=ON"
+          if [ -n "${{ secrets.TDESKTOP_API_ID }}" ] && [ -n "${{ secrets.TDESKTOP_API_HASH }}" ]; then
+            echo "Use HateG API credentials from repository secrets."
+            API="-D TDESKTOP_API_ID=${{ secrets.TDESKTOP_API_ID }} -D TDESKTOP_API_HASH=${{ secrets.TDESKTOP_API_HASH }}"
+          fi
           if [ $GITHUB_REF == 'refs/heads/nightly' ]; then
             echo "Use the open credentials."
             API="-D TDESKTOP_API_ID=611335 -D TDESKTOP_API_HASH=d524b414d21f4d37f08684c1df41ac9c"

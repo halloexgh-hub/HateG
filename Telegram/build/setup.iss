@@ -1,9 +1,9 @@
-#define MyAppShortName "Telegram"
-#define MyAppName "Telegram Desktop"
-#define MyAppPublisher "Telegram FZ-LLC"
-#define MyAppURL "https://desktop.telegram.org"
+#define MyAppShortName "HateG"
+#define MyAppName "HateG"
+#define MyAppPublisher "HateG Community"
+#define MyAppURL "https://github.com/halloexgh-hub/HateG"
 #define MyAppExeName "Telegram.exe"
-#define MyAppId "53F49750-6209-4FBF-9CA8-7A333C87D1ED"
+#define MyAppId "BA3C4E87-4B6E-49F9-B697-6E8AE6490834"
 #define CurrentYear GetDateTimeString('yyyy','','')
 
 [Setup]
