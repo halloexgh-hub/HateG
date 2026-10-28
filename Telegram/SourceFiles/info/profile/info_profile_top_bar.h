@@ -337,6 +337,7 @@ private:
 	Ui::PeerUserpicView _userpicView;
 	InMemoryKey _userpicUniqueKey;
 	QImage _cachedUserpic;
+	QImage _hategBanner;
 	Ui::CommunityUserpicEffect _communityUserpicEffect;
 	bool _communityEffect = false;
 	QImage _monoforumMask;

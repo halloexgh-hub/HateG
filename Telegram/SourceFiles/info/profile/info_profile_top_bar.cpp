@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "info/profile/info_profile_top_bar.h"
 
+#include "settings/hateg_settings.h"
+
 #include "api/api_peer_colors.h"
 #include "api/api_peer_photo.h"
 #include "api/api_user_privacy.h"
@@ -457,6 +459,13 @@ TopBar::TopBar(
 , _backToggles(std::move(descriptor.backToggles)) {
 	setObjectName(u"profileTopBar"_q);
 	_peer->updateFull();
+	if (_peer->isSelf()) {
+		::HateG::LocalSettings::Instance().bannerPathValue(
+		) | rpl::on_next([=](const QString &path) {
+			_hategBanner = path.isEmpty() ? QImage() : QImage(path);
+			update();
+		}, lifetime());
+	}
 	_communityEffect = (_source == Source::Community);
 	if (const auto broadcast = _peer->monoforumBroadcast()) {
 		broadcast->updateFull();
@@ -670,6 +679,9 @@ void TopBar::adjustColors(const std::optional<QColor> &edgeColor) {
 		? collectible->textColor
 		: shouldOverrideTitle
 		? std::optional<QColor>(st::groupCallMembersFg->c)
+		: (_peer->isSelf() && !edgeColor)
+		? std::optional<QColor>(
+			::HateG::LocalSettings::Instance().nameColor())
 		: std::nullopt);
 	_tabSubtitleOverride = collectible
 		? collectible->textColor
@@ -2938,6 +2950,26 @@ void TopBar::paintEvent(QPaintEvent *e) {
 		} else {
 			p.drawImage(x, y, _cachedGradient);
 		}
+	}
+	if (!_hategBanner.isNull()) {
+		const auto scaled = _hategBanner.scaled(
+			size(),
+			Qt::KeepAspectRatioByExpanding,
+			Qt::SmoothTransformation);
+		p.save();
+		auto path = QPainterPath();
+		path.addRoundedRect(
+			rect() + QMargins{ 0, 0, 0, st::boxRadius + 1 },
+			st::boxRadius,
+			st::boxRadius);
+		p.setClipPath(path);
+		p.drawImage(
+			QPoint(
+				(width() - scaled.width()) / 2,
+				(height() - scaled.height()) / 2),
+			scaled);
+		p.fillRect(rect(), QColor(255, 255, 255, 112));
+		p.restore();
 	}
 	if (_patternEmoji && _patternEmoji->ready()) {
 		paintAnimatedPattern(p, clipBounds, geometry);

@@ -3,6 +3,9 @@ This file is part of HateG, based on Telegram Desktop.
 */
 #include "settings/sections/settings_hateg.h"
 
+#include "core/application.h"
+#include "core/file_utilities.h"
+#include "settings/hateg_settings.h"
 #include "settings/settings_builder.h"
 #include "settings/settings_common_session.h"
 #include "ui/toast/toast.h"
@@ -10,6 +13,9 @@ This file is part of HateG, based on Telegram Desktop.
 #include "ui/wrap/vertical_layout.h"
 #include "window/window_session_controller.h"
 #include "styles/style_menu_icons.h"
+
+#include <QtCore/QFileInfo>
+#include <QtGui/QImageReader>
 
 namespace Settings {
 namespace {
@@ -61,6 +67,7 @@ void HateG::setupContent() {
 				});
 			};
 		};
+		auto &settings = ::HateG::LocalSettings::Instance();
 
 		builder.addSkip();
 		builder.addSubsectionTitle(rpl::single(u"Оформление профиля"_q));
@@ -68,16 +75,46 @@ void HateG::setupContent() {
 			.id = u"hateg/banner"_q,
 			.title = rpl::single(u"Баннер профиля"_q),
 			.icon = { &st::menuIconPhoto },
-			.label = rpl::single(u"Скоро"_q),
-			.onClick = comingSoon(u"Баннер профиля"_q),
+			.label = settings.bannerPathValue() | rpl::map([](QString path) {
+				return path.isEmpty()
+					? u"Не выбран"_q
+					: QFileInfo(path).fileName();
+			}),
+			.onClick = [=] {
+				FileDialog::GetOpenPath(
+					Core::App().getFileDialogParent(),
+					u"Выберите баннер HateG"_q,
+					u"Изображения (*.png *.jpg *.jpeg *.webp)"_q,
+					crl::guard(controller, [=](
+							const FileDialog::OpenResult &result) {
+						if (result.paths.isEmpty()) {
+							return;
+						}
+						const auto path = result.paths.front();
+						if (!QImageReader(path).canRead()) {
+							controller->showToast({
+								.text = { u"HateG не смог прочитать изображение."_q },
+							});
+							return;
+						}
+						::HateG::LocalSettings::Instance().setBannerPath(path);
+						controller->showToast({
+							.text = { u"Баннер HateG сохранён."_q },
+						});
+					}));
+			},
 			.keywords = { u"banner"_q, u"profile"_q },
 		});
 		builder.addButton({
 			.id = u"hateg/name-color"_q,
 			.title = rpl::single(u"Цвет ника"_q),
 			.icon = { &st::menuIconPalette },
-			.label = rpl::single(u"Фиолетовый"_q),
-			.onClick = comingSoon(u"Цвет ника"_q),
+			.label = settings.nameColorIndexValue() | rpl::map([](int) {
+				return ::HateG::LocalSettings::Instance().nameColorName();
+			}),
+			.onClick = [=] {
+				::HateG::LocalSettings::Instance().selectNextNameColor();
+			},
 			.keywords = { u"color"_q, u"name"_q },
 		});
 
@@ -88,17 +125,42 @@ void HateG::setupContent() {
 			.id = u"hateg/gifts"_q,
 			.title = rpl::single(u"Моя витрина подарков"_q),
 			.icon = { &st::menuIconGiftPremium },
-			.label = rpl::single(u"0"_q),
-			.onClick = comingSoon(u"Витрина подарков"_q),
+			.label = settings.giftsValue() | rpl::map([](int count) {
+				return QString::number(count);
+			}),
+			.onClick = [=] {
+				const auto count = ::HateG::LocalSettings::Instance().gifts();
+				controller->showToast({
+					.text = { count
+						? u"Косметических подарков: %1"_q.arg(count)
+						: u"Витрина пока пустая."_q },
+				});
+			},
 			.keywords = { u"gifts"_q, u"showcase"_q },
 		});
 		builder.addButton({
 			.id = u"hateg/gift-store"_q,
 			.title = rpl::single(u"Магазин косметики"_q),
 			.icon = { &st::menuIconShop },
-			.label = rpl::single(u"Скоро"_q),
-			.onClick = comingSoon(u"Магазин косметики"_q),
+			.label = rpl::single(u"Подарок — 100 HG"_q),
+			.onClick = [=] {
+				const auto bought
+					= ::HateG::LocalSettings::Instance().buyDemoGift();
+				controller->showToast({
+					.text = { bought
+						? u"Косметический подарок добавлен в витрину."_q
+						: u"Недостаточно HG. Откройте кошелёк."_q },
+				});
+			},
 			.keywords = { u"store"_q, u"gifts"_q },
+		});
+		builder.addButton({
+			.id = u"hateg/gift-exchange"_q,
+			.title = rpl::single(u"Отправить или обменять"_q),
+			.icon = { &st::menuIconShare },
+			.label = rpl::single(u"После подключения сервера"_q),
+			.onClick = comingSoon(u"Обмен подарками между пользователями"_q),
+			.keywords = { u"exchange"_q, u"send"_q, u"gifts"_q },
 		});
 
 		builder.addDivider();
@@ -108,8 +170,18 @@ void HateG::setupContent() {
 			.id = u"hateg/wallet"_q,
 			.title = rpl::single(u"Баланс HateG"_q),
 			.icon = { &st::menuIconTon },
-			.label = rpl::single(u"0 HG"_q),
-			.onClick = comingSoon(u"Косметический кошелёк"_q),
+			.label = settings.balanceValue() | rpl::map([](int balance) {
+				return QString::number(balance) + u" HG"_q;
+			}),
+			.onClick = [=] {
+				const auto claimed
+					= ::HateG::LocalSettings::Instance().claimDemoBalance();
+				controller->showToast({
+					.text = { claimed
+						? u"Начислено 500 тестовых HG."_q
+						: u"HG — бесплатная косметическая валюта HateG."_q },
+				});
+			},
 			.keywords = { u"wallet"_q, u"balance"_q },
 		});
 		builder.addDividerText(rpl::single(

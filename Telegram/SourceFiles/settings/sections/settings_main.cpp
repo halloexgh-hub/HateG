@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "settings/sections/settings_main.h"
 
 #include "settings/settings_common_session.h"
+#include "settings/hateg_settings.h"
 
 #include "api/api_cloud_password.h"
 #include "api/api_credits.h"
@@ -71,6 +72,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/layers/generic_box.h"
 #include "ui/new_badges.h"
 #include "ui/power_saving.h"
+#include "ui/painter.h"
 #include "ui/rect.h"
 #include "ui/text/format_values.h"
 #include "ui/text/text_utilities.h"
@@ -134,6 +136,7 @@ private:
 	QString _phoneText;
 	object_ptr<Ui::FlatLabel> _username = { nullptr };
 	object_ptr<Ui::IconButton> _qrButton = { nullptr };
+	QImage _hategBanner;
 
 };
 
@@ -196,6 +199,35 @@ Cover::Cover(
 
 	initViewers();
 	setupChildGeometry();
+
+	auto &hateg = ::HateG::LocalSettings::Instance();
+	hateg.bannerPathValue(
+	) | rpl::on_next([=](const QString &path) {
+		_hategBanner = path.isEmpty() ? QImage() : QImage(path);
+		update();
+	}, lifetime());
+	hateg.nameColorIndexValue(
+	) | rpl::on_next([=](int) {
+		_name->setTextColorOverride(
+			::HateG::LocalSettings::Instance().nameColor());
+	}, _name->lifetime());
+	paintRequest(
+	) | rpl::on_next([=] {
+		if (_hategBanner.isNull()) {
+			return;
+		}
+		auto p = Painter(this);
+		const auto scaled = _hategBanner.scaled(
+			size(),
+			Qt::KeepAspectRatioByExpanding,
+			Qt::SmoothTransformation);
+		p.drawImage(
+			QPoint(
+				(width() - scaled.width()) / 2,
+				(height() - scaled.height()) / 2),
+			scaled);
+		p.fillRect(rect(), QColor(255, 255, 255, 168));
+	}, lifetime());
 
 	_userpic->setVideoAllowed(true);
 	_userpic->switchChangePhotoOverlay(_user->isSelf(), [=](
