@@ -465,6 +465,10 @@ TopBar::TopBar(
 			_hategBanner = path.isEmpty() ? QImage() : QImage(path);
 			update();
 		}, lifetime());
+		::HateG::LocalSettings::Instance().giftsValue(
+		) | rpl::on_next([=](int) {
+			update();
+		}, lifetime());
 	}
 	_communityEffect = (_source == Source::Community);
 	if (const auto broadcast = _peer->monoforumBroadcast()) {
@@ -2984,6 +2988,34 @@ void TopBar::paintEvent(QPaintEvent *e) {
 	if (clipBounds.intersects(geometry)) {
 		paintUserpic(p, geometry);
 		paintStoryOutline(p, geometry);
+		const auto hategGifts = _peer->isSelf()
+			? ::HateG::LocalSettings::Instance().gifts()
+			: 0;
+		if (hategGifts > 0) {
+			const auto badge = QRect(
+				geometry.right() - 25,
+				geometry.bottom() - 25,
+				48,
+				30);
+			p.save();
+			p.setRenderHint(QPainter::Antialiasing);
+			p.setPen(QPen(QColor(255, 255, 255, 210), 2));
+			p.setBrush(QColor(119, 103, 216, 235));
+			p.drawRoundedRect(badge, 15, 15);
+			auto font = p.font();
+			font.setFamily(u"Segoe UI Emoji"_q);
+			font.setPixelSize(15);
+			font.setBold(true);
+			p.setFont(font);
+			p.setPen(Qt::white);
+			p.drawText(
+				badge,
+				Qt::AlignCenter,
+				hategGifts == 1
+					? u"🎁"_q
+					: u"🎁 %1"_q.arg(hategGifts));
+			p.restore();
+		}
 	}
 
 	paintTabSubtitle(p);

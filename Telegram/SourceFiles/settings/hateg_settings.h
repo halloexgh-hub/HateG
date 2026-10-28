@@ -27,10 +27,7 @@ public:
 
 	[[nodiscard]] int gifts() const;
 	[[nodiscard]] rpl::producer<int> giftsValue() const;
-	[[nodiscard]] int balance() const;
-	[[nodiscard]] rpl::producer<int> balanceValue() const;
-	bool buyDemoGift();
-	bool claimDemoBalance();
+	void addFreeGift();
 
 private:
 	LocalSettings();
@@ -39,7 +36,6 @@ private:
 	rpl::variable<QString> _bannerPath;
 	rpl::variable<int> _nameColorIndex;
 	rpl::variable<int> _gifts;
-	rpl::variable<int> _balance;
 };
 
 } // namespace HateG

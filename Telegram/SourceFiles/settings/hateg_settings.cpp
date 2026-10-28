@@ -14,8 +14,6 @@ This file is part of HateG, based on Telegram Desktop.
 namespace HateG {
 namespace {
 
-constexpr auto kDemoGiftPrice = 100;
-
 const auto &NameColors() {
 	static const auto result = std::array{
 		QColor(u"#7767D8"_q),
@@ -57,7 +55,6 @@ LocalSettings::LocalSettings() {
 		0,
 		int(NameColors().size()) - 1);
 	_gifts = std::max(storage.value(u"wallet/gifts"_q, 0).toInt(), 0);
-	_balance = std::max(storage.value(u"wallet/balance"_q, 0).toInt(), 0);
 }
 
 QString LocalSettings::bannerPath() const {
@@ -112,32 +109,9 @@ rpl::producer<int> LocalSettings::giftsValue() const {
 	return _gifts.value();
 }
 
-int LocalSettings::balance() const {
-	return _balance.current();
-}
-
-rpl::producer<int> LocalSettings::balanceValue() const {
-	return _balance.value();
-}
-
-bool LocalSettings::buyDemoGift() {
-	if (balance() < kDemoGiftPrice) {
-		return false;
-	}
-	_balance = balance() - kDemoGiftPrice;
+void LocalSettings::addFreeGift() {
 	_gifts = gifts() + 1;
-	save(u"wallet/balance"_q, balance());
 	save(u"wallet/gifts"_q, gifts());
-	return true;
-}
-
-bool LocalSettings::claimDemoBalance() {
-	if (balance() || gifts()) {
-		return false;
-	}
-	_balance = 500;
-	save(u"wallet/balance"_q, balance());
-	return true;
 }
 
 void LocalSettings::save(const QString &key, const QVariant &value) {

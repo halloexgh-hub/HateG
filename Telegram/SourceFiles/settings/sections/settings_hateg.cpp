@@ -128,60 +128,23 @@ void HateG::setupContent() {
 		builder.addSubsectionTitle(rpl::single(u"Подарки HateG"_q));
 		builder.addButton({
 			.id = u"hateg/gifts"_q,
-			.title = rpl::single(u"Моя витрина подарков"_q),
+			.title = rpl::single(u"Подарки в профиле"_q),
 			.icon = { &st::menuIconGiftPremium },
 			.label = settings.giftsValue() | rpl::map([](int count) {
-				return QString::number(count);
+				return count
+					? u"🎁 × %1"_q.arg(count)
+					: u"Пока нет"_q;
 			}),
 			.onClick = [=] {
-				const auto count = ::HateG::LocalSettings::Instance().gifts();
+				::HateG::LocalSettings::Instance().addFreeGift();
 				controller->showToast(Ui::Toast::Config{
-					.text = { count
-						? u"Косметических подарков: %1"_q.arg(count)
-						: u"Витрина пока пустая."_q },
+					.text = { u"Бесплатный подарок добавлен в профиль."_q },
 				});
 			},
 			.keywords = { u"gifts"_q, u"showcase"_q },
 		});
-		builder.addButton({
-			.id = u"hateg/gift-store"_q,
-			.title = rpl::single(u"Магазин косметики"_q),
-			.icon = { &st::menuIconShop },
-			.label = rpl::single(u"Подарок — 100 HG"_q),
-			.onClick = [=] {
-				const auto bought
-					= ::HateG::LocalSettings::Instance().buyDemoGift();
-				controller->showToast(Ui::Toast::Config{
-					.text = { bought
-						? u"Косметический подарок добавлен в витрину."_q
-						: u"Недостаточно HG. Откройте кошелёк."_q },
-				});
-			},
-			.keywords = { u"store"_q, u"gifts"_q },
-		});
-		builder.addDivider();
-		builder.addSkip();
-		builder.addSubsectionTitle(rpl::single(u"Косметический кошелёк"_q));
-		builder.addButton({
-			.id = u"hateg/wallet"_q,
-			.title = rpl::single(u"Баланс HateG"_q),
-			.icon = { &st::menuIconTon },
-			.label = settings.balanceValue() | rpl::map([](int balance) {
-				return QString::number(balance) + u" HG"_q;
-			}),
-			.onClick = [=] {
-				const auto claimed
-					= ::HateG::LocalSettings::Instance().claimDemoBalance();
-				controller->showToast(Ui::Toast::Config{
-					.text = { claimed
-						? u"Начислено 500 тестовых HG."_q
-						: u"HG — бесплатная косметическая валюта HateG."_q },
-				});
-			},
-			.keywords = { u"wallet"_q, u"balance"_q },
-		});
 		builder.addDividerText(rpl::single(
-			u"HG — только внутренняя косметика HateG, не деньги и не Telegram Stars."_q));
+			u"Нажмите, чтобы бесплатно добавить подарок. Он появится возле аватарки в профиле HateG."_q));
 
 		builder.addSkip();
 	};
