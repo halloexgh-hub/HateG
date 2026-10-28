@@ -6,7 +6,6 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "info/profile/info_profile_top_bar.h"
-#include "info/peer_gifts/info_peer_gifts_common.h"
 
 #include "settings/hateg_settings.h"
 
@@ -466,10 +465,6 @@ TopBar::TopBar(
 		) | rpl::on_next([=](const QString &path) {
 			_hategBanner = path.isEmpty() ? QImage() : QImage(path);
 			update();
-		}, lifetime());
-		::HateG::LocalSettings::Instance().visualGiftIdValue(
-		) | rpl::skip(1) | rpl::on_next([=](uint64) {
-			setupPinnedToTopGifts(controller);
 		}, lifetime());
 	}
 	_communityEffect = (_source == Source::Community);
@@ -3474,7 +3469,7 @@ void TopBar::paintAnimatedPattern(
 
 void TopBar::setupPinnedToTopGifts(
 		not_null<Window::SessionController*> controller) {
-	const auto applyGifts = crl::guard(this, [=](
+	const auto requestDone = crl::guard(this, [=](
 			std::vector<Data::SavedStarGift> gifts) {
 		const auto shouldHideFirst = _pinnedToTopGiftsFirstTimeShowed
 			&& !_pinnedToTopGifts.empty();
@@ -3500,29 +3495,6 @@ void TopBar::setupPinnedToTopGifts(
 		updateCollectibleStatus();
 		setupNewGifts(controller, gifts);
 	});
-	const auto requestDone = crl::guard(this, [=](
-			std::vector<Data::SavedStarGift> gifts) {
-		const auto selected = _peer->isSelf()
-			? ::HateG::LocalSettings::Instance().visualGiftId()
-			: 0;
-		if (!selected) {
-			applyGifts(std::move(gifts));
-			return;
-		}
-		Info::PeerGifts::GiftsStars(
-			&_peer->session(),
-			_peer
-		) | rpl::take(1) | rpl::on_next([=](
-					std::vector<Info::PeerGifts::GiftTypeStars> catalog) mutable {
-			const auto i = ranges::find(catalog, selected, [](const auto &gift) {
-				return gift.info.id;
-			});
-			if (i != end(catalog)) {
-				gifts.push_back(Data::SavedStarGift{ .info = i->info });
-			}
-			applyGifts(std::move(gifts));
-		}, lifetime());
-	});
 	_peer->session().recentSharedGifts().request(_peer, requestDone, true);
 }
 
@@ -3542,10 +3514,6 @@ void TopBar::setupNewGifts(
 			if (unique->id != emojiStatusId) {
 				filteredGifts.push_back(gift);
 			}
-		} else if (_peer->isSelf()
-				&& gift.info.id
-					== ::HateG::LocalSettings::Instance().visualGiftId()) {
-			filteredGifts.push_back(gift);
 		}
 	}
 
@@ -3608,13 +3576,7 @@ void TopBar::setupNewGifts(
 		entry.button->show();
 
 		entry.button->setClickedCallback([=, giftData = gift, peer = _peer] {
-			if (giftData.manageId) {
-				::Settings::ShowSavedStarGiftBox(controller, peer, giftData);
-			} else {
-				controller->showToast(Ui::Toast::Config{
-					.text = { u"Визуальный подарок HateG из каталога Telegram."_q },
-				});
-			}
+			::Settings::ShowSavedStarGiftBox(controller, peer, giftData);
 		});
 
 		_pinnedToTopGifts.push_back(std::move(entry));

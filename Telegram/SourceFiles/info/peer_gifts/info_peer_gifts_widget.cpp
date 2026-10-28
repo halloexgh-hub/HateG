@@ -44,6 +44,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "mtproto/sender.h"
 #include "window/window_session_controller.h"
 #include "settings/settings_credits_graphics.h"
+#include "settings/hateg_settings.h"
 #include "styles/style_info.h"
 #include "styles/style_layers.h" // boxRadius
 #include "styles/style_media_player.h" // mediaPlayerMenuCheck
@@ -216,6 +217,7 @@ private:
 	void loadCollections();
 	void loadMore();
 	void loaded(const MTPpayments_SavedStarGifts &result);
+	void refreshHateGVisualGift();
 	void markInCollection(const Data::SavedStarGift &gift);
 	void refreshButtons();
 	void validateButtons();
@@ -302,6 +304,7 @@ private:
 
 	Ui::Animations::Basic _scrollAnimation;
 	base::unique_qptr<Ui::PopupMenu> _menu;
+	rpl::lifetime _hategGiftLifetime;
 
 protected:
 	void focusOutEvent(QFocusEvent *e) override;
@@ -368,6 +371,12 @@ InnerWidget::InnerWidget(
 	}
 
 	loadCollections();
+	if (_peer->isSelf()) {
+		::HateG::LocalSettings::Instance().visualGiftIdValue(
+		) | rpl::on_next([=](uint64) {
+			refreshHateGVisualGift();
+		}, lifetime());
+	}
 
 	_window->session().data().giftsUpdates(
 	) | rpl::on_next([=](const Data::GiftsUpdate &update) {
@@ -413,7 +422,46 @@ void InnerWidget::switchTo(int collectionId) {
 	_list = &_entries->list;
 	refreshButtons();
 	refreshAbout();
+	refreshHateGVisualGift();
 	loadMore();
+}
+
+void InnerWidget::refreshHateGVisualGift() {
+	if (!_peer->isSelf() || _descriptor.current().collectionId != 0) {
+		return;
+	}
+	_hategGiftLifetime.destroy();
+	const auto selected = ::HateG::LocalSettings::Instance().visualGiftId();
+	Info::PeerGifts::GiftsStars(
+		&_peer->session(),
+		_peer
+	) | rpl::take(1) | rpl::on_next([=](
+			std::vector<GiftTypeStars> catalog) {
+		auto &list = _all.list;
+		list.erase(ranges::remove_if(list, [](const Entry &entry) {
+			return !entry.gift.manageId;
+		}), end(list));
+		if (selected) {
+			const auto i = ranges::find(catalog, selected, [](const auto &gift) {
+				return gift.info.id;
+			});
+			if (i != end(catalog)) {
+				auto local = Data::SavedStarGift{
+					.info = i->info,
+					.mine = true,
+				};
+				list.insert(begin(list), Entry{
+					.gift = local,
+					.descriptor = DescriptorForGift(_peer, local),
+				});
+			}
+		}
+		if (_entries == &_all) {
+			_all.total = int(list.size());
+			refreshButtons();
+			refreshAbout();
+		}
+	}, _hategGiftLifetime);
 }
 
 void InnerWidget::loadCollections() {
@@ -763,6 +811,7 @@ void InnerWidget::loaded(const MTPpayments_SavedStarGifts &result) {
 	}
 	refreshButtons();
 	refreshAbout();
+	refreshHateGVisualGift();
 
 	if (hasUnique) {
 		Ui::PreloadUniqueGiftResellPrices(&_peer->session());
@@ -1205,6 +1254,9 @@ void InnerWidget::showMenuFor(not_null<GiftButton*> button, QPoint point) {
 	if (index < 0) {
 		return;
 	}
+	if (!(*_list)[index].gift.manageId) {
+		return;
+	}
 
 	auto entry = ::Settings::SavedStarGiftEntry(
 		_peer,
@@ -1287,11 +1339,16 @@ void InnerWidget::showGift(int index) {
 		}
 		return;
 	}
-	::Settings::ShowSavedStarGiftBox(
-		_window,
-		_peer,
-		(*_list)[index].gift,
-		pinnedSavedGifts());
+	const auto &gift = (*_list)[index].gift;
+	if (!gift.manageId) {
+		_window->showToast(u"Бесплатный визуальный подарок HateG."_q);
+	} else {
+		::Settings::ShowSavedStarGiftBox(
+			_window,
+			_peer,
+			gift,
+			pinnedSavedGifts());
+	}
 }
 
 void InnerWidget::refreshAbout() {
