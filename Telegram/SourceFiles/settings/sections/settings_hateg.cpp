@@ -62,7 +62,7 @@ void HateG::setupContent() {
 		});
 		const auto comingSoon = [=](QString feature) {
 			return [=] {
-				controller->showToast({
+				controller->showToast(Ui::Toast::Config{
 					.text = { feature + u": скоро в HateG"_q },
 				});
 			};
@@ -92,13 +92,13 @@ void HateG::setupContent() {
 						}
 						const auto path = result.paths.front();
 						if (!QImageReader(path).canRead()) {
-							controller->showToast({
+							controller->showToast(Ui::Toast::Config{
 								.text = { u"HateG не смог прочитать изображение."_q },
 							});
 							return;
 						}
 						::HateG::LocalSettings::Instance().setBannerPath(path);
-						controller->showToast({
+						controller->showToast(Ui::Toast::Config{
 							.text = { u"Баннер HateG сохранён."_q },
 						});
 					}));
@@ -130,7 +130,7 @@ void HateG::setupContent() {
 			}),
 			.onClick = [=] {
 				const auto count = ::HateG::LocalSettings::Instance().gifts();
-				controller->showToast({
+				controller->showToast(Ui::Toast::Config{
 					.text = { count
 						? u"Косметических подарков: %1"_q.arg(count)
 						: u"Витрина пока пустая."_q },
@@ -146,7 +146,7 @@ void HateG::setupContent() {
 			.onClick = [=] {
 				const auto bought
 					= ::HateG::LocalSettings::Instance().buyDemoGift();
-				controller->showToast({
+				controller->showToast(Ui::Toast::Config{
 					.text = { bought
 						? u"Косметический подарок добавлен в витрину."_q
 						: u"Недостаточно HG. Откройте кошелёк."_q },
@@ -176,7 +176,7 @@ void HateG::setupContent() {
 			.onClick = [=] {
 				const auto claimed
 					= ::HateG::LocalSettings::Instance().claimDemoBalance();
-				controller->showToast({
+				controller->showToast(Ui::Toast::Config{
 					.text = { claimed
 						? u"Начислено 500 тестовых HG."_q
 						: u"HG — бесплатная косметическая валюта HateG."_q },
