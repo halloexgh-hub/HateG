@@ -6,6 +6,7 @@ This file is part of HateG, based on Telegram Desktop.
 #include "core/application.h"
 #include "core/file_utilities.h"
 #include "boxes/star_gift_box.h"
+#include "data/data_user.h"
 #include "info/peer_gifts/info_peer_gifts_common.h"
 #include "lang/lang_keys.h"
 #include "main/main_session.h"
@@ -38,7 +39,7 @@ void VisualGiftCatalogBox(
 	box->addButton(tr::lng_close(), [=] { box->closeBox(); });
 
 	const auto session = &controller->session();
-	const auto peer = session->user();
+	const auto peer = not_null<PeerData*>{ session->user().get() };
 	auto gifts = Info::PeerGifts::GiftsStars(
 		session,
 		peer
