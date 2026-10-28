@@ -7,6 +7,8 @@ This file is part of HateG, based on Telegram Desktop.
 #include "core/file_utilities.h"
 #include "boxes/star_gift_box.h"
 #include "info/peer_gifts/info_peer_gifts_common.h"
+#include "lang/lang_keys.h"
+#include "main/main_session.h"
 #include "settings/hateg_settings.h"
 #include "settings/settings_builder.h"
 #include "settings/settings_common_session.h"
@@ -16,6 +18,7 @@ This file is part of HateG, based on Telegram Desktop.
 #include "ui/wrap/vertical_layout.h"
 #include "window/window_session_controller.h"
 #include "styles/style_boxes.h"
+#include "styles/style_layers.h"
 #include "styles/style_menu_icons.h"
 
 #include <QtCore/QFileInfo>
