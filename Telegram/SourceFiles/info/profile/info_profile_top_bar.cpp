@@ -459,6 +459,7 @@ TopBar::TopBar(
 }())
 , _backToggles(std::move(descriptor.backToggles)) {
 	setObjectName(u"profileTopBar"_q);
+	const auto controller = descriptor.controller;
 	_peer->updateFull();
 	if (_peer->isSelf()) {
 		::HateG::LocalSettings::Instance().bannerPathValue(
@@ -475,7 +476,6 @@ TopBar::TopBar(
 	if (const auto broadcast = _peer->monoforumBroadcast()) {
 		broadcast->updateFull();
 	}
-	const auto controller = descriptor.controller;
 
 	if (_peer->isMegagroup() || _peer->isChat()) {
 		_statusLabel->setMembersLinkCallback([=, peer = _peer] {
