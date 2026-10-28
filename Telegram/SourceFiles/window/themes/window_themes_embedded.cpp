@@ -324,7 +324,10 @@ style::colorizer ColorizerForTheme(const QString &absolutePath) {
 	if (const auto accent = colors.get(i->type)) {
 		return ColorizerFrom(*i, *accent);
 	}
-	return {};
+	// HateG keeps Telegram's familiar built-in themes while giving fresh
+	// profiles a distinct, calm violet accent. A user-selected or system
+	// accent above always wins, so this never takes customization away.
+	return ColorizerFrom(*i, QColor(u"#7767D8"_q));
 }
 
 void Colorize(EmbeddedScheme &scheme, const style::colorizer &colorizer) {
