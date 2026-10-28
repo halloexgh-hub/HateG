@@ -56,6 +56,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "settings/settings_faq_suggestions.h"
 #include "settings/sections/settings_credits.h"
 #include "settings/sections/settings_folders.h"
+#include "settings/sections/settings_hateg.h"
 #include "settings/sections/settings_information.h"
 #include "settings/sections/settings_notifications.h"
 #include "settings/settings_power_saving.h"
@@ -376,6 +377,19 @@ void BuildSectionButtons(SectionBuilder &builder) {
 			.keywords = { u"profile"_q, u"edit"_q, u"information"_q },
 		});
 	}
+
+	builder.addSectionButton({
+		.title = rpl::single(u"HateG"_q),
+		.targetSection = HateGId(),
+		.icon = { &st::menuIconPalette },
+		.keywords = {
+			u"hateg"_q,
+			u"banner"_q,
+			u"gifts"_q,
+			u"wallet"_q,
+			u"customization"_q,
+		},
+	});
 
 	builder.addSectionButton({
 		.title = tr::lng_settings_section_notify(),

@@ -1948,6 +1948,8 @@ PRIVATE
     settings/sections/settings_folders.h
     settings/sections/settings_global_ttl.cpp
     settings/sections/settings_global_ttl.h
+    settings/sections/settings_hateg.cpp
+    settings/sections/settings_hateg.h
     settings/sections/settings_information.cpp
     settings/sections/settings_information.h
     settings/settings_intro.cpp
