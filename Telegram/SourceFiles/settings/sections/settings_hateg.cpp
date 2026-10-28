@@ -5,13 +5,17 @@ This file is part of HateG, based on Telegram Desktop.
 
 #include "core/application.h"
 #include "core/file_utilities.h"
+#include "boxes/star_gift_box.h"
+#include "info/peer_gifts/info_peer_gifts_common.h"
 #include "settings/hateg_settings.h"
 #include "settings/settings_builder.h"
 #include "settings/settings_common_session.h"
 #include "ui/toast/toast.h"
+#include "ui/layers/generic_box.h"
 #include "ui/vertical_list.h"
 #include "ui/wrap/vertical_layout.h"
 #include "window/window_session_controller.h"
+#include "styles/style_boxes.h"
 #include "styles/style_menu_icons.h"
 
 #include <QtCore/QFileInfo>
@@ -21,6 +25,47 @@ namespace Settings {
 namespace {
 
 using namespace Builder;
+
+void VisualGiftCatalogBox(
+		not_null<Ui::GenericBox*> box,
+		not_null<Window::SessionController*> controller) {
+	box->setTitle(rpl::single(u"Подарки Telegram — бесплатно в HateG"_q));
+	box->setWidth(st::boxWideWidth);
+	box->setNoContentMargin(true);
+	box->addButton(tr::lng_close(), [=] { box->closeBox(); });
+
+	const auto session = &controller->session();
+	const auto peer = session->user();
+	auto gifts = Info::PeerGifts::GiftsStars(
+		session,
+		peer
+	) | rpl::map([](std::vector<Info::PeerGifts::GiftTypeStars> list) {
+		auto result = Ui::GiftsDescriptor();
+		result.list.reserve(list.size());
+		for (auto &gift : list) {
+			result.list.emplace_back(std::move(gift));
+		}
+		return result;
+	});
+	box->verticalLayout()->add(Ui::MakeGiftsList({
+		.window = controller,
+		.peer = peer,
+		.gifts = std::move(gifts),
+		.handler = [=](Info::PeerGifts::GiftDescriptor descriptor) {
+			const auto gift = std::get_if<Info::PeerGifts::GiftTypeStars>(
+				&descriptor);
+			if (!gift) {
+				return;
+			}
+			::HateG::LocalSettings::Instance().setVisualGiftId(
+				gift->info.id);
+			controller->showToast(Ui::Toast::Config{
+				.text = { u"Подарок выбран для профиля HateG бесплатно."_q },
+			});
+			box->closeBox();
+		},
+	}));
+}
 
 class HateG final : public Section<HateG> {
 public:
@@ -128,23 +173,18 @@ void HateG::setupContent() {
 		builder.addSubsectionTitle(rpl::single(u"Подарки HateG"_q));
 		builder.addButton({
 			.id = u"hateg/gifts"_q,
-			.title = rpl::single(u"Подарки в профиле"_q),
+			.title = rpl::single(u"Каталог подарков Telegram"_q),
 			.icon = { &st::menuIconGiftPremium },
-			.label = settings.giftsValue() | rpl::map([](int count) {
-				return count
-					? u"🎁 × %1"_q.arg(count)
-					: u"Пока нет"_q;
+			.label = settings.visualGiftIdValue() | rpl::map([](uint64 id) {
+				return id ? u"Выбран"_q : u"Открыть"_q;
 			}),
 			.onClick = [=] {
-				::HateG::LocalSettings::Instance().addFreeGift();
-				controller->showToast(Ui::Toast::Config{
-					.text = { u"Бесплатный подарок добавлен в профиль."_q },
-				});
+				controller->show(Box(VisualGiftCatalogBox, controller));
 			},
 			.keywords = { u"gifts"_q, u"showcase"_q },
 		});
 		builder.addDividerText(rpl::single(
-			u"Нажмите, чтобы бесплатно добавить подарок. Он появится возле аватарки в профиле HateG."_q));
+			u"Это настоящие визуалы Telegram Gifts. Выбор бесплатный и действует только внутри HateG."_q));
 
 		builder.addSkip();
 	};

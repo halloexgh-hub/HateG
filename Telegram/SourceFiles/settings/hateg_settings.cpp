@@ -54,7 +54,7 @@ LocalSettings::LocalSettings() {
 		storage.value(u"visuals/nameColor"_q, 0).toInt(),
 		0,
 		int(NameColors().size()) - 1);
-	_gifts = std::max(storage.value(u"wallet/gifts"_q, 0).toInt(), 0);
+	_visualGiftId = storage.value(u"visuals/giftId"_q, 0).toULongLong();
 }
 
 QString LocalSettings::bannerPath() const {
@@ -101,17 +101,17 @@ void LocalSettings::selectNextNameColor() {
 	save(u"visuals/nameColor"_q, nameColorIndex());
 }
 
-int LocalSettings::gifts() const {
-	return _gifts.current();
+uint64 LocalSettings::visualGiftId() const {
+	return _visualGiftId.current();
 }
 
-rpl::producer<int> LocalSettings::giftsValue() const {
-	return _gifts.value();
+rpl::producer<uint64> LocalSettings::visualGiftIdValue() const {
+	return _visualGiftId.value();
 }
 
-void LocalSettings::addFreeGift() {
-	_gifts = gifts() + 1;
-	save(u"wallet/gifts"_q, gifts());
+void LocalSettings::setVisualGiftId(uint64 id) {
+	_visualGiftId = id;
+	save(u"visuals/giftId"_q, QVariant::fromValue<qulonglong>(id));
 }
 
 void LocalSettings::save(const QString &key, const QVariant &value) {

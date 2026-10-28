@@ -25,9 +25,9 @@ public:
 	[[nodiscard]] rpl::producer<int> nameColorIndexValue() const;
 	void selectNextNameColor();
 
-	[[nodiscard]] int gifts() const;
-	[[nodiscard]] rpl::producer<int> giftsValue() const;
-	void addFreeGift();
+	[[nodiscard]] uint64 visualGiftId() const;
+	[[nodiscard]] rpl::producer<uint64> visualGiftIdValue() const;
+	void setVisualGiftId(uint64 id);
 
 private:
 	LocalSettings();
@@ -35,7 +35,7 @@ private:
 
 	rpl::variable<QString> _bannerPath;
 	rpl::variable<int> _nameColorIndex;
-	rpl::variable<int> _gifts;
+	rpl::variable<uint64> _visualGiftId;
 };
 
 } // namespace HateG
