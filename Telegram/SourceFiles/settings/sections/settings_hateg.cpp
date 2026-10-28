@@ -60,13 +60,6 @@ void HateG::setupContent() {
 				controller,
 				Window::GifPauseReason::Layer),
 		});
-		const auto comingSoon = [=](QString feature) {
-			return [=] {
-				controller->showToast(Ui::Toast::Config{
-					.text = { feature + u": скоро в HateG"_q },
-				});
-			};
-		};
 		auto &settings = ::HateG::LocalSettings::Instance();
 
 		builder.addSkip();
@@ -117,6 +110,18 @@ void HateG::setupContent() {
 			},
 			.keywords = { u"color"_q, u"name"_q },
 		});
+		builder.addButton({
+			.id = u"hateg/banner-reset"_q,
+			.title = rpl::single(u"Убрать баннер"_q),
+			.icon = { &st::menuIconDelete },
+			.onClick = [=] {
+				::HateG::LocalSettings::Instance().setBannerPath(QString());
+				controller->showToast(Ui::Toast::Config{
+					.text = { u"Баннер HateG убран."_q },
+				});
+			},
+			.keywords = { u"banner"_q, u"reset"_q },
+		});
 
 		builder.addDivider();
 		builder.addSkip();
@@ -154,15 +159,6 @@ void HateG::setupContent() {
 			},
 			.keywords = { u"store"_q, u"gifts"_q },
 		});
-		builder.addButton({
-			.id = u"hateg/gift-exchange"_q,
-			.title = rpl::single(u"Отправить или обменять"_q),
-			.icon = { &st::menuIconShare },
-			.label = rpl::single(u"После подключения сервера"_q),
-			.onClick = comingSoon(u"Обмен подарками между пользователями"_q),
-			.keywords = { u"exchange"_q, u"send"_q, u"gifts"_q },
-		});
-
 		builder.addDivider();
 		builder.addSkip();
 		builder.addSubsectionTitle(rpl::single(u"Косметический кошелёк"_q));
@@ -187,16 +183,6 @@ void HateG::setupContent() {
 		builder.addDividerText(rpl::single(
 			u"HG — только внутренняя косметика HateG, не деньги и не Telegram Stars."_q));
 
-		builder.addSkip();
-		builder.addSubsectionTitle(rpl::single(u"Подключение"_q));
-		builder.addButton({
-			.id = u"hateg/connection"_q,
-			.title = rpl::single(u"HateG Connection Rescue"_q),
-			.icon = { &st::menuIconNetwork },
-			.label = rpl::single(u"В разработке"_q),
-			.onClick = comingSoon(u"Connection Rescue"_q),
-			.keywords = { u"proxy"_q, u"connection"_q, u"network"_q },
-		});
 		builder.addSkip();
 	};
 

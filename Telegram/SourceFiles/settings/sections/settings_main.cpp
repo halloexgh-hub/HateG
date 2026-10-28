@@ -226,7 +226,9 @@ Cover::Cover(
 				(width() - scaled.width()) / 2,
 				(height() - scaled.height()) / 2),
 			scaled);
-		p.fillRect(rect(), QColor(255, 255, 255, 168));
+		// Keep the selected banner vivid. A light 168/255 overlay made
+		// colourful images look almost completely white.
+		p.fillRect(rect(), QColor(0, 0, 0, 24));
 	}, lifetime());
 
 	_userpic->setVideoAllowed(true);

@@ -2968,7 +2968,8 @@ void TopBar::paintEvent(QPaintEvent *e) {
 				(width() - scaled.width()) / 2,
 				(height() - scaled.height()) / 2),
 			scaled);
-		p.fillRect(rect(), QColor(255, 255, 255, 112));
+		// A small dark scrim preserves readability without bleaching the image.
+		p.fillRect(rect(), QColor(0, 0, 0, 24));
 		p.restore();
 	}
 	if (_patternEmoji && _patternEmoji->ready()) {
